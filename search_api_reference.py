@@ -8,7 +8,7 @@ bl_info = {
     "version": (0, 1),
     "blender": (2, 80, 0),
     "location": "Text Editor > Edit > Search API Reference",
-    "wiki_url": "https://github.com/tin2tin/",
+    "wiki_url": "https://github.com/tin2tin/Search-API-Reference",
     "tracker_url": "",
     "category": "Text Editor"}
 
