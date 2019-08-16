@@ -1,9 +1,13 @@
 import bpy
 from bpy.types import Operator
+from bpy.props import (
+    EnumProperty,
+)
+
 
 bl_info = {
-    "name": "Search API Reference",
-    "description": "Search API reference",
+    "name": "Search Online Reference",
+    "description": "Search Online reference",
     "author": "tintwotin",
     "version": (0, 1),
     "blender": (2, 80, 0),
@@ -13,11 +17,25 @@ bl_info = {
     "category": "Text Editor"}
 
 
-class TEXT_OT_api_reference(Operator):
-    '''Search API reference'''
-    bl_idname = "text.api_reference"
-    bl_label = "Search API Reference"
+class TEXT_OT_online_reference(Operator):
+    '''Search for current word or selection online'''
+    bl_idname = "text.online_reference"
+    bl_label = "Search Online"
     bl_options = {"REGISTER", "UNDO"}
+
+    type: EnumProperty(
+        name="Search Online",
+        description="Search for current word or selection online",
+        options={'ENUM_FLAG'},
+        items=(
+             ('API', "API Reference", "Search the API reference"),
+             ('PYTHON', "Python Reference", "Search the Python reference"),
+             ('STACKEXCHANGE', "Stack Exchange", "Search Stack Exchange"),
+             ('SOURCECODE', "Source Code", "Blender Source Code"),
+             ('GITHUB', "Github", "Github"),
+             ),
+             default={'API'},
+        )
 
     @classmethod
     def poll(cls, context):
@@ -26,16 +44,67 @@ class TEXT_OT_api_reference(Operator):
     def execute(self, context):
         st = context.space_data
         s = self.get_selected_text(st.text)
-        if s is None:
-            bpy.ops.text.select_word()
-            s = self.get_selected_text(st.text)
-            if s is not None:
-                bpy.ops.wm.url_open(url="https://docs.blender.org/api/2.80/search.html?q="+s)
+
+        if self.type == {'API'}:
+            if s is None:
+                bpy.ops.text.select_word()
+                s = self.get_selected_text(st.text)
+                if s is not None:
+                    bpy.ops.wm.url_open(url="https://docs.blender.org/api/2.80/search.html?q="+s)
+                else:
+                    self.report({'INFO'}, "Selection is missing")
+                    return {'CANCELLED'}
             else:
-                self.report({'INFO'}, "Selection is missing")
-                return {'CANCELLED'}
-        else:
-            bpy.ops.wm.url_open(url="https://docs.blender.org/api/2.80/search.html?q="+s)
+                bpy.ops.wm.url_open(url="https://docs.blender.org/api/2.80/search.html?q="+s)
+
+        if self.type == {'STACKEXCHANGE'}:
+            if s is None:
+                bpy.ops.text.select_word()
+                s = self.get_selected_text(st.text)
+                if s is not None:
+                    bpy.ops.wm.url_open(url="https://blender.stackexchange.com/search?q="+s)
+                else:
+                    self.report({'INFO'}, "Selection is missing")
+                    return {'CANCELLED'}
+            else:
+                bpy.ops.wm.url_open(url="https://blender.stackexchange.com/search?q="+s)
+
+        if self.type == {'PYTHON'}:
+            if s is None:
+                bpy.ops.text.select_word()
+                s = self.get_selected_text(st.text)
+                if s is not None:
+                    bpy.ops.wm.url_open(url="https://docs.python.org/3/search.html?q="+s)
+                else:
+                    self.report({'INFO'}, "Selection is missing")
+                    return {'CANCELLED'}
+            else:
+                bpy.ops.wm.url_open(url="https://docs.python.org/3/search.html?q="+s)
+
+        if self.type == {'SOURCECODE'}:
+            if s is None:
+                bpy.ops.text.select_word()
+                s = self.get_selected_text(st.text)
+                if s is not None:
+                    bpy.ops.wm.url_open(url="https://developer.blender.org/diffusion/B/browse/master/?grep="+s)
+                else:
+                    self.report({'INFO'}, "Selection is missing")
+                    return {'CANCELLED'}
+            else:
+                bpy.ops.wm.url_open(url="https://developer.blender.org/diffusion/B/browse/master/?grep="+s)
+
+        if self.type == {'GITHUB'}:
+            if s is None:
+                bpy.ops.text.select_word()
+                s = self.get_selected_text(st.text)
+                if s is not None:
+                    bpy.ops.wm.url_open(url="https://www.google.com/search?q=intext%3A%22"+s+"%22+ext%3Apy+bpy+site%3Agithub.com")
+                else:
+                    self.report({'INFO'}, "Selection is missing")
+                    return {'CANCELLED'}
+            else:
+                bpy.ops.wm.url_open(url="https://www.google.com/search?q=intext%3A%22"+s+"%22+ext%3Apy+bpy+site%3Agithub.com")
+
         return {'FINISHED'}
 
     def get_selected_text(self, text):
@@ -89,19 +158,21 @@ class TEXT_OT_api_reference(Operator):
 
 def panel_append(self, context):
     self.layout.separator()
-    self.layout.operator(TEXT_OT_api_reference.bl_idname)
+    self.layout.operator_menu_enum("text.online_reference", "type")
 
 
 def register():
-    bpy.utils.register_class(TEXT_OT_api_reference)
+    bpy.utils.register_class(TEXT_OT_online_reference)
     bpy.types.TEXT_MT_edit.append(panel_append)
-    bpy.types.TEXT_MT_toolbox.append(panel_append)
+#   For 2.80 change _context_menu to _toolbox
+    bpy.types.TEXT_MT_context_menu.append(panel_append)
 
 
 def unregister():
-    bpy.utils.unregister_class(TEXT_OT_api_reference)
+    bpy.utils.unregister_class(TEXT_OT_online_reference)
     bpy.types.TEXT_MT_edit.remove(panel_append)
-    bpy.types.TEXT_MT_toolbox.remove(panel_append)
+    # For 2.80 change _context_menu to _toolbox
+    bpy.types.TEXT_MT_context_menu.remove(panel_append)
 
 
 if __name__ == "__main__":
